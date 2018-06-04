@@ -1,5 +1,6 @@
 <?php
-
+/** image qty on page */
+define('IMAGE_COUNT', 9);
 /** defined constant that consists page title  */
 define('PAGE_TITLE', 'Image Gallery');
 /** defined image placeholder  */
@@ -28,7 +29,7 @@ function formatImages($data)
         $images = [];
         $offset = isset($_GET['p']) ? $_GET['p'] - 1 : 0;
         //json_decode converts string to array, array_slice select first 9 elements
-        foreach (array_slice($data, $offset * 9, 9) as $key => $value) {
+        foreach (array_slice($data, $offset * IMAGE_COUNT, IMAGE_COUNT) as $key => $value) {
             /*
              * set new array element
              *
@@ -226,7 +227,7 @@ function getCollection()
  */
 function getPageCount($collection)
 {
-    return count($collection) / 9;
+    return count($collection) / IMAGE_COUNT;
 }
 
 /** Get last page number
@@ -255,7 +256,7 @@ function getFirstPage()
  */
 function getNextPage($collection)
 {
-    if (isset($_REQUEST['p']) && getPageCount($collection) < $_REQUEST['p']) {
+    if (isset($_REQUEST['p']) && getPageCount($collection) <= $_REQUEST['p']) {
         return false;
     } elseif (isset($_REQUEST['p'])) {
         return $_REQUEST['p'] + 1;
@@ -290,7 +291,7 @@ function getCurrentPage()
 function renderPagination($collection)
 {
     $paginationHtml = '';
-    if (count($collection) / 9 > 1) {
+    if (count($collection) / IMAGE_COUNT > 1) {
         $paginationHtml .= "<li class='page-item'><a class='page-link' href='/?p=" . getFirstPage() . "'>Go to first page</a></li>";
         if ($prevPage = getPrevPage()) {
             $paginationHtml .= "<li class='page-item'><a class='page-link' href='/?p=" . $prevPage . "'>" . $prevPage . "</a></li>";
