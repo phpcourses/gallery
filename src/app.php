@@ -468,7 +468,7 @@ function createDir($path)
  */
 function isLoggedIn()
 {
-    if (isset($_SESSION['auth']) && $_SESSION['auth'] === true) {
+    if (isset($_SESSION['auth']) && !empty($_SESSION['auth'])) {
         return true;
     }
 
@@ -498,19 +498,16 @@ function isAllowedPage($page)
  */
 function authUser($postUser, $postPass)
 {
-    if (file_exists(USERS_FILE)) {
-        $users = file(USERS_FILE);
-        foreach ($users as $user) {
-            list($user, $password) = explode(':', $user);
-            if (trim($user) == $postUser && trim($password) == $postPass) {
-                $_SESSION['auth'] = true;
-                $_SESSION['messages'] = ['You have logged in successfuly'];
-                unset($_SESSION['fields']);
-                return true;
-                break;
-            }
-        }
+    $database = connect();
+    $pass = crypt($postPass, $postUser);
+    $result = request($database, 'SELECT id FROM users WHERE login = :login AND password = :pass', [':login' => $postUser, ':pass' => $pass]);
+    if ($result->rowCount() == 1) {
+        $_SESSION['auth'] = $result->fetchColumn(0);
+        $_SESSION['messages'] = ['You have logged in successfuly'];
+        unset($_SESSION['fields']);
+        return true;
     }
+
     $_SESSION['errors'] = ['Incorrect Login'];
     $_SESSION['fields'] = $_POST;
 
@@ -675,24 +672,19 @@ function validateRegistration($data)
  */
 function createUser($login, $pass)
 {
-    if (file_exists(USERS_FILE)) {
-        $userFile = fopen(USERS_FILE, 'a+');
-    } else {
-        $userFile = fopen(USERS_FILE, 'w');
-    }
-    if (fwrite($userFile, implode(':', array($login, $pass)) . "\n")) {
+    $pass = crypt($pass, $login);
+    $database = connect();
+    if (request($database, 'INSERT INTO users(id, login, password) VALUES(NULL, :login, :pass)', array(':login' => $login, ':pass' => $pass))) {
+        $_SESSION['auth'] = $database->lastInsertId();
         $_SESSION['messages'][] = 'Your account has been created';
-        authUser($login, $pass);
         return true;
     }
-    fclose($userFile);
-
-    $_SESSION['errors'] = ['Something went wrong'];
+    $_SESSION['errors'][] = 'Something went wrong';
     return false;
 }
 
 /** Create connection to database
- * @return bool|PDO
+ * @return PDO
  */
 function connect()
 {
@@ -705,11 +697,13 @@ function connect()
         }
     } catch (PDOException $exception) {
         error_log($exception->getMessage(), 3, $_SERVER['DOCUMENT_ROOT'] . ERROR_LOG);
+        echo 'Could not connect to DB';
+        exit;
     } catch (Exception $exception) {
         error_log($exception->getMessage(), 3, $_SERVER['DOCUMENT_ROOT'] . ERROR_LOG);
+        echo 'Could not connect to DB';
+        exit;
     }
-
-    return false;
 }
 
 /** Process database queries
@@ -725,7 +719,8 @@ function request(PDO $database, $sql, $params = [])
     $result = $query->execute($params);
     if ($result === false) {
         error_log($query->errorInfo()[2], 3, $_SERVER['DOCUMENT_ROOT'] . ERROR_LOG);
+        return false;
     }
 
-    return $result;
+    return $query;
 }
