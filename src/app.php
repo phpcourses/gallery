@@ -15,6 +15,8 @@ define('DATA_PATH', 'pub/media/data/');
 define('USERS_FILE', 'var/users.txt');
 /** text file with users list */
 define('ERROR_LOG', 'var/error.log');
+/** project config file */
+define('CONFIG_FILE', 'var/config.ini');
 
 /** Get image array
  *
@@ -687,4 +689,43 @@ function createUser($login, $pass)
 
     $_SESSION['errors'] = ['Something went wrong'];
     return false;
+}
+
+/** Create connection to database
+ * @return bool|PDO
+ */
+function connect()
+{
+    try {
+        if (file_exists(CONFIG_FILE)) {
+            $config = parse_ini_file(CONFIG_FILE);
+            return new PDO($config['engine'] . ':host=' . $config['host'] . ';dbname=' . $config['dbname'], $config['user'], $config['path']);
+        } else {
+            throw new Exception('Config file is not exist');
+        }
+    } catch (PDOException $exception) {
+        error_log($exception->getMessage(), 3, $_SERVER['DOCUMENT_ROOT'] . ERROR_LOG);
+    } catch (Exception $exception) {
+        error_log($exception->getMessage(), 3, $_SERVER['DOCUMENT_ROOT'] . ERROR_LOG);
+    }
+
+    return false;
+}
+
+/** Process database queries
+ *
+ * @param PDO $database
+ * @param string $sql
+ * @param array $params
+ * @return bool|int|PDOStatement
+ */
+function request(PDO $database, $sql, $params = [])
+{
+    $query = $database->prepare($sql);
+    $result = $query->execute($params);
+    if ($result === false) {
+        error_log($query->errorInfo()[2], 3, $_SERVER['DOCUMENT_ROOT'] . ERROR_LOG);
+    }
+
+    return $result;
 }
