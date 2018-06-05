@@ -1,7 +1,7 @@
 <?php
 
-$path = $_REQUEST['path'];
+$id = $_REQUEST['id'];
 
-deleteImage($path);
+deleteImage($id);
 
 header('Location: /');

@@ -52,7 +52,7 @@
                             </div>
                             <?php if (isLoggedIn()): ?>
                                 <button type="button" class="btn btn-danger btn-xs"
-                                        onclick="if (confirm('Are you sure?')) {location.href = '/removeImage?path=<?php echo urlencode($image['url']) ?>';}">
+                                        onclick="if (confirm('Are you sure?')) {location.href = '/removeImage?id=<?php echo $image['id'] ?>';}">
                                     Delete
                                 </button>
                             <?php endif; ?>
