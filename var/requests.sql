@@ -8,4 +8,4 @@ LIMIT 0, 9
 
 --query for adding images
 INSERT INTO images(id, image_path, thumbnail_path, description, author_name, created_at, user_id)
-VALUES(NULL, 'image_path', 'thumpnail_path', 'description', 'author name', CURRENT_TIMESTAMP(), 1)
+VALUES(NULL, :image_path, :thumpnail_path, :description, :author_name, CURRENT_TIMESTAMP(), :user_id)

@@ -18,55 +18,6 @@ define('ERROR_LOG', 'var/error.log');
 /** project config file */
 define('CONFIG_FILE', 'var/config.ini');
 
-/** Get image array
- *
- * @param $data
- * @return array
- * @throws Exception
- */
-function formatImages($data)
-{
-    if (!empty($data)) { //check if array is not empty
-        /** @var array with images $images */
-        $images = [];
-        $offset = isset($_GET['p']) ? $_GET['p'] - 1 : 0;
-        //json_decode converts string to array, array_slice select first 9 elements
-        foreach (array_slice($data, $offset * IMAGE_COUNT, IMAGE_COUNT) as $key => $value) {
-            /*
-             * set new array element
-             *
-             * NOTE: Here is one issue: url https://picsum.photos/0016_gkT4FfgHO5o.jpeg
-             * doesn't return image that exists on page https://unsplash.com/photos/gkT4FfgHO5o
-             * so if we use one of that solution it will display wrong image. So we need to extract correct images by some rule:
-             * The idea is finding some pattern in source page (https://unsplash.com/photos/gkT4FfgHO5o) and getting correct link
-             *
-             * found url with direct link to image in source of page https://unsplash.com/photos/gkT4FfgHO5o/download?force=true
-             * alternative solution is using https://picsum.photos/500/500/?image=16 URL
-            */
-            $image = imageExists($value);
-            $width = 348;
-            $height = 0;
-            list($author, $description) = getData($image);
-            $images[] = [
-                'url' => $image,
-                'thumbnail' => generateThumbnail($image, $width, $height),
-                //'thumbnail' => $image,
-                'author' => $author,
-                'description' => $description,
-                'width' => $width,
-                'height' => $height,
-                'created_at' => getCurrentDate()
-            ];
-        }
-    } else {
-        // set empty array
-        $images = [];
-    }
-    sortImages($images);
-
-    return $images;
-}
-
 /** Sort array of images
  * @param $images
  */
@@ -75,10 +26,10 @@ function sortImages(&$images)
     if (!empty($images)) {
         //sorting part
         usort($images, function ($imageA, $imageB) {
-            if ($imageA['description'] == $imageB['description']) {
+            if ($imageA['created_at'] == $imageB['created_at']) {
                 return 0;
             }
-            return ($imageA['description'] < $imageB['description']) ? -1 : 1;
+            return ($imageA['created_at'] < $imageB['created_at']) ? -1 : 1;
         });
     }
 }
@@ -122,10 +73,10 @@ function generateThumbnail($imagePath, &$width, &$height)
     }
 
     $params = getOriginalSize($imagePath);
-    $thumnailPath = resizeImage($imagePath, $width, $height, $params);
+    $thumbnailPath = resizeImage($imagePath, $width, $height, $params);
     list($width, $height) = $params;
-    if ($thumnailPath) {
-        return $thumnailPath;
+    if ($thumbnailPath) {
+        return $thumbnailPath;
     } else {
         return IMAGE_PLACEHOLDER;
     }
@@ -213,33 +164,47 @@ function getOriginalSize($imagePath)
  */
 function getCollection()
 {
-    if (file_exists(IMAGE_RESOURCE_URL)) {
-        $images = array_filter(scandir(IMAGE_RESOURCE_URL), function ($item) {
-            return !is_dir(IMAGE_RESOURCE_URL . $item);
-        });
-        return $images;
+    $database = connect();
+    $offset = isset($_GET['p']) ? $_GET['p'] - 1 : 0;
+    $offset = $offset * IMAGE_COUNT;
+    $sql = "SELECT images.id, image_path, thumbnail_path, author_name, description, created_at, login FROM images
+LEFT JOIN users on images.user_id = users.id
+LIMIT " . $offset . ", " . IMAGE_COUNT;
+
+
+    $result = request($database, $sql);
+    $images = [];
+    if ($result->rowCount() > 0) {
+        foreach ($result->fetchAll() as $value) {
+            $images[] = $value;
+        }
+    } else {
+        // set empty array
+        $images = [];
     }
-    return false;
+    sortImages($images);
+
+    return $images;
 }
 
 /** Return qty of pages
  *
- * @param $collection
  * @return float|int
  */
-function getPageCount($collection)
+function getPageCount()
 {
-    return count($collection) / IMAGE_COUNT;
+    $database = connect();
+    $result = request($database, 'SELECT COUNT(id) FROM images');
+    return ceil($result->fetchColumn(0) / IMAGE_COUNT);
 }
 
 /** Get last page number
  *
- * @param $collection
  * @return int
  */
-function getLastPage($collection): int
+function getLastPage(): int
 {
-    return getPageCount($collection);
+    return getPageCount();
 }
 
 /** Get first page, first page is 1
@@ -253,12 +218,11 @@ function getFirstPage()
 
 /** Get next page number
  *
- * @param $collection
  * @return bool|int
  */
-function getNextPage($collection)
+function getNextPage()
 {
-    if (isset($_REQUEST['p']) && getPageCount($collection) <= $_REQUEST['p']) {
+    if (isset($_REQUEST['p']) && getPageCount() <= $_REQUEST['p']) {
         return false;
     } elseif (isset($_REQUEST['p'])) {
         return $_REQUEST['p'] + 1;
@@ -287,22 +251,21 @@ function getCurrentPage()
 
 /** Generate pagination HTML
  *
- * @param $collection
  * @return string
  */
-function renderPagination($collection)
+function renderPagination()
 {
     $paginationHtml = '';
-    if (count($collection) / IMAGE_COUNT > 1) {
+    if (getPageCount() > 1) {
         $paginationHtml .= "<li class='page-item'><a class='page-link' href='/?p=" . getFirstPage() . "'>Go to first page</a></li>";
         if ($prevPage = getPrevPage()) {
             $paginationHtml .= "<li class='page-item'><a class='page-link' href='/?p=" . $prevPage . "'>" . $prevPage . "</a></li>";
         }
         $paginationHtml .= "<li class='page-item active'><a class='page-link' href='#'>" . getCurrentPage() . "</a></li>";
-        if ($nextPage = getNextPage($collection)) {
+        if ($nextPage = getNextPage()) {
             $paginationHtml .= "<li class='page-item'><a class='page-link' href='/?p=" . $nextPage . "'>" . $nextPage . "</a></li>";
         }
-        $paginationHtml .= "<li class='page-item'><a class='page-link' href='/?p=" . getLastPage($collection) . "'>Go to last page</a></li>";
+        $paginationHtml .= "<li class='page-item'><a class='page-link' href='/?p=" . getLastPage() . "'>Go to last page</a></li>";
     }
 
     return $paginationHtml;
@@ -390,45 +353,35 @@ function uploadFile($file)
     return false;
 }
 
-/** save data from form to CSV file, check directory existing
- *
- * @param $filename
- * @return bool
- */
-function saveData($filename)
-{
-    if (!createDir(DATA_PATH)) {
-        return false;
-    }
-
-    $handle = fopen(DATA_PATH . basename($filename) . '.csv', 'w');
-    if ($handle) {
-        fputcsv($handle, array($_REQUEST['authorname'], $_REQUEST['description']));
-    }
-
-    fclose($handle);
-
-    return true;
-}
-
 /** save everything including file, form data and generate thumbnail
- *
  * @return bool
+ * @throws Exception
  */
 function save()
 {
+    $database = connect();
+    $sql = 'INSERT INTO images(id, image_path, thumbnail_path, description, author_name, created_at, user_id)
+VALUES(NULL, :image_path, :thumbnail_path, :description, :author_name, CURRENT_TIMESTAMP(), :user_id)';
     if ($filename = uploadFile($_FILES['image'])) {
         $width = 348;
         $height = 0;
-        generateThumbnail($filename, $width, $height);
-        if (!saveData($filename)) {
-            return false;
-        }
-    }
-    $_SESSION['messages'] = ['You have uploaded new image'];
-    unset($_SESSION['fields']);
+        $params = [
+            ':image_path' => $filename,
+            ':thumbnail_path' => generateThumbnail($filename, $width, $height),
+            ':description' => $_REQUEST['description'],
+            ':author_name' => $_REQUEST['authorname'],
+            ':user_id' => $_SESSION['auth'],
+        ];
+        request($database, $sql, $params);
 
-    return true;
+        $_SESSION['messages'] = ['You have uploaded new image'];
+        unset($_SESSION['fields']);
+
+        return true;
+    }
+    $_SESSION['errors'][] = 'Unable to upload image';
+
+    return false;
 }
 
 /** Get data from CSV file
@@ -618,13 +571,17 @@ function exceptionHandler($e)
 
 /** Remove image
  *
- * @param $imagePath
+ * @param $id
  * @return bool
  */
-function deleteImage($imagePath)
+function deleteImage($id)
 {
     if (isLoggedIn()) {
-        unlink($imagePath);
+        $database = connect();
+        $image = request($database, "SELECT image_path, thumbnail_path FROM images WHERE id = :id", [':id' => $id]);
+        request($database, "DELETE FROM images WHERE id = :id", [':id' => $id]);
+        unlink($image->fetchColumn(0));
+        unlink($image->fetchColumn(1));
         $_SESSION['messages'] = ['You have deleted image'];
         return true;
     } else {

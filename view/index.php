@@ -1,6 +1,3 @@
-<?php
-$collection = getCollection();
-?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -38,18 +35,18 @@ $collection = getCollection();
             </div>
         <?php endif; ?>
         <div class="row">
-            <?php if (!empty($images = formatImages($collection))): ?>
+            <?php if (!empty($images = getCollection())): ?>
                 <?php foreach ($images as $image): ?>
                     <div class="col-md-4">
                         <div class="card mb-4 box-shadow">
                             <a data-fancybox="gallery"
-                               href="<?php echo $image['url'] ?>">
-                                <img class="card-img-top" alt="Image" src="<?php echo $image['thumbnail'] ?>">
+                               href="<?php echo $image['image_path'] ?>">
+                                <img class="card-img-top" alt="Image" src="<?php echo $image['thumbnail_path'] ?>">
                             </a>
                             <div class="card-body">
-                                <p class="card-text">Author: <?php echo $image['author'] ?>,
+                                <p class="card-text">Author: <?php echo $image['author_name'] ?>,
                                     Description: <?php echo $image['description'] ?>,
-                                    Resolution: <?php echo implode('x', [$image['width'], $image['height']]) ?>
+                                    Owner: <?php echo $image['login'] ?>
                                     Created at: <?php echo $image['created_at'] ?>
                                 </p>
                             </div>
@@ -71,7 +68,7 @@ $collection = getCollection();
         <div class="d-flex p-2">
             <nav>
                 <ul class="pagination justify-content-center">
-                    <?php echo renderPagination($collection) ?>
+                    <?php echo renderPagination() ?>
                 </ul>
             </nav>
         </div>
