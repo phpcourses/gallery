@@ -14,7 +14,7 @@
                     <strong>Error:&nbsp;</strong><?php echo $errors ?>
                 </div>
                 <?php endif; ?>
-                <form action="/submit" method="post" enctype="multipart/form-data">
+                <form action="/process" method="post" enctype="multipart/form-data">
                     <div class="form-group">
                         <label for="authorname">Author Name</label>
                         <input type="text" class="form-control" id="authorname" name="authorname" value="<?php echo getFieldValue('authorname') ?>">
