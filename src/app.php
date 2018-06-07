@@ -1,4 +1,12 @@
 <?php
+
+error_reporting(E_ALL | E_STRICT);
+session_start();
+
+spl_autoload_register(function ($classname) {
+    require_once('src/classes/' . $classname . '.php');
+});
+
 /** image qty on page */
 define('IMAGE_COUNT', 9);
 /** defined constant that consists page title  */
@@ -428,21 +436,6 @@ function isLoggedIn()
     return false;
 }
 
-/** Check if page is allowed for non logged in users
- *
- * @param $page
- * @return mixed
- */
-function isAllowedPage($page)
-{
-    if ((!isLoggedIn() && $page == 'form') || (isLoggedIn() && ($page == 'login' || $page == 'register'))) {
-        header('Location: /');
-        exit();
-    }
-
-    return $page;
-}
-
 /** Authorize user
  *
  * @param $postUser
@@ -534,39 +527,6 @@ function logOut()
     unset($_SESSION['auth']);
     $_SESSION['messages'] = ['You have logged out'];
     header('Location: /');
-}
-
-/** Write error to log file
- *
- * @param $errorNo
- * @param $errorMessage
- * @param $errorFile
- * @param $errorLine
- */
-function errorHandler($errorNo, $errorMessage, $errorFile, $errorLine)
-{
-    $error = 'Error level: ' . $errorNo . ' Text: ' . $errorMessage . ' in file: ' . $errorFile . ' on line: ' . $errorLine . "\n";
-    error_log($error, 3, $_SERVER['DOCUMENT_ROOT'] . ERROR_LOG);
-}
-
-/** Write fatal error to log file and show error page
- */
-function shutDown()
-{
-    if ($error = error_get_last()) {
-        error_log($error['message'], 3, $_SERVER['DOCUMENT_ROOT'] . ERROR_LOG);
-        require($_SERVER['DOCUMENT_ROOT'] . 'view/error.php');
-    }
-}
-
-/** Write exception to log and show error page
- *
- * @param $e
- */
-function exceptionHandler($e)
-{
-    error_log($e->getMessage(), 3, $_SERVER['DOCUMENT_ROOT'] . ERROR_LOG);
-    require($_SERVER['DOCUMENT_ROOT'] . 'view/error.php');
 }
 
 /** Remove image
