@@ -608,7 +608,7 @@ function connect()
     try {
         if (file_exists(CONFIG_FILE)) {
             $config = parse_ini_file(CONFIG_FILE);
-            return new PDO($config['engine'] . ':host=' . $config['host'] . ';dbname=' . $config['dbname'], $config['user'], $config['path']);
+            return new PDO($config['engine'] . ':host=' . $config['host'] . ';dbname=' . $config['dbname'], $config['user'], $config['pass']);
         } else {
             throw new Exception('Config file is not exist');
         }

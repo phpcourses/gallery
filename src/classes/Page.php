@@ -2,38 +2,55 @@
 
 class Page
 {
+    /** @var string Page id/path */
     public $page = '';
 
-    function __construct($page)
+    /**
+     * Page constructor.
+     * @param $page
+     */
+    public function __construct($page)
     {
         $this->page = $page??'index';
         $this->isAllowedPage();
     }
 
-    function render($page = 'index')
+    /**
+     * Render HTML
+     * @param string $page
+     */
+    private function render($page = 'index')
     {
         require_once('view/' . $page . '.php');
     }
 
-    function process($page)
+    /**
+     * Process page
+     * @param $page
+     */
+    private function process($page)
     {
         require_once('src/' . $page . '.php');
     }
 
-    function load()
+    /**
+     * Load page
+     */
+    public function load()
     {
-        if (file_exists('view/' . $this->page)) {
+        if (file_exists('view/' . $this->page . '.php')) {
             $this->render($this->page);
-        } elseif (file_exists('src/' . $this->page)) {
+        } elseif (file_exists('src/' . $this->page . '.php')) {
             $this->process($this->page);
         } else {
             $this->render();
         }
     }
 
-    /** Check if page is allowed for non logged in users
+    /**
+     * Check if page is allowed for non logged in users
      */
-    function isAllowedPage()
+    private function isAllowedPage()
     {
         if(!preg_match("~^\w+$~", $this->page)) {
             die("Page id must be alphanumeric");
