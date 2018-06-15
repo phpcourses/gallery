@@ -3,34 +3,16 @@
 class Page
 {
     /** @var string Page id/path */
-    public $page = '';
+    private $path = '';
 
     /**
      * Page constructor.
      * @param $page
      */
-    public function __construct($page)
+    public function __construct($get)
     {
-        $this->page = $page??'index';
+        $this->path = $get['page']??'index';
         $this->isAllowedPage();
-    }
-
-    /**
-     * Render HTML
-     * @param string $page
-     */
-    private function render($page = 'index')
-    {
-        require_once('view/' . $page . '.php');
-    }
-
-    /**
-     * Process page
-     * @param $page
-     */
-    private function process($page)
-    {
-        require_once('src/' . $page . '.php');
     }
 
     /**
@@ -38,13 +20,8 @@ class Page
      */
     public function load()
     {
-        if (file_exists('view/' . $this->page . '.php')) {
-            $this->render($this->page);
-        } elseif (file_exists('src/' . $this->page . '.php')) {
-            $this->process($this->page);
-        } else {
-            $this->render();
-        }
+        $controller = new Controller($this);
+        $controller->process();
     }
 
     /**
@@ -52,12 +29,22 @@ class Page
      */
     private function isAllowedPage()
     {
-        if(!preg_match("~^\w+$~", $this->page)) {
+        if(!preg_match("~^\w+$~", $this->path)) {
             die("Page id must be alphanumeric");
         }
-        if ((!isLoggedIn() && $this->page == 'form') || (isLoggedIn() && ($this->page == 'login' || $this->page == 'register'))) {
+        if ((!isLoggedIn() && $this->path == 'form') || (isLoggedIn() && ($this->path == 'login' || $this->path == 'register'))) {
             header('Location: /');
             exit();
         }
+    }
+
+    /**
+     * Get page path
+     *
+     * @return string
+     */
+    public function getPath()
+    {
+        return $this->path;
     }
 }

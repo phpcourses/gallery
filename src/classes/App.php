@@ -20,7 +20,7 @@ class App
      */
     public function run()
     {
-        $page = new Page($_GET['page']);
+        $page = new Page($_GET);
         $page->load();
     }
 
