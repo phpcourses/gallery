@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Error</title>
-    <link rel="stylesheet" href="<?php echo $_SERVER['REMOTE_HOST'] ?>pub/css/bootstrap.css">
+    <link rel="stylesheet" href="<?php //echo $_SERVER['REMOTE_HOST'] ?>pub/css/bootstrap.css">
 </head>
 <body>
 <div class="container">

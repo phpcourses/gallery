@@ -89,6 +89,13 @@ class Controller
     }
 
     /**
+     * Logout user
+     */
+    private function logoutAction()
+    {
+        logOut();
+    }
+    /**
      * Registration process
      */
     private function processRegisterAction()
