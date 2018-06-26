@@ -2,8 +2,8 @@
 
 class App
 {
-    /** @var string  */
-    const ERROR_LOG = 'var/error.log';
+    /** @var array fake dependency injection(singleton) */
+    private static $di = [];
 
     /**
      * App constructor.
@@ -13,6 +13,7 @@ class App
         set_error_handler(array($this, 'errorHandler'), -1);
         set_exception_handler(array($this, 'exceptionHandler'));
         register_shutdown_function(array($this, 'shutDown'));
+        $this->get('session');
     }
 
     /**
@@ -34,7 +35,7 @@ class App
     public function errorHandler($errorNo, $errorMessage, $errorFile, $errorLine)
     {
         $error = 'Error level: ' . $errorNo . ' Text: ' . $errorMessage . ' in file: ' . $errorFile . ' on line: ' . $errorLine . "\n";
-        error_log($error, 3, $_SERVER['DOCUMENT_ROOT'] . self::ERROR_LOG);
+        App::get('log')->write($error);
     }
 
     /** Write fatal error to log file and show error page
@@ -42,7 +43,7 @@ class App
     public function shutDown()
     {
         if ($error = error_get_last()) {
-            error_log($error['message'], 3, $_SERVER['DOCUMENT_ROOT'] . self::ERROR_LOG);
+            App::get('log')->write($error['message']);
             require($_SERVER['DOCUMENT_ROOT'] . 'view/error.php');
         }
     }
@@ -53,7 +54,22 @@ class App
      */
     public function exceptionHandler($e)
     {
-        error_log($e->getMessage(), 3, $_SERVER['DOCUMENT_ROOT'] . self::ERROR_LOG);
+        App::get('log')->write($e->getMessage());
         require($_SERVER['DOCUMENT_ROOT'] . 'view/error.php');
+    }
+
+    /**
+     * Static method for getting multiple instance of classes we use in our app
+     *
+     * @param $className
+     * @return mixed
+     */
+    public static function get($className)
+    {
+        if (!isset(self::$di[$className])) {
+            $class = ucwords($className);
+            self::$di[$className] = new $class;
+        }
+        return self::$di[$className];
     }
 }

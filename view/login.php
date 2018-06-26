@@ -9,7 +9,7 @@
 <div class="album py-5 bg-light">
     <div class="container">
         <h1 class="h1 text-center">Login as user</h1>
-        <?php if ($errors = getErrors()): ?>
+        <?php if ($errors): ?>
             <div class="alert alert-danger">
                 <strong>Error:&nbsp;</strong><?php echo $errors ?>
             </div>
@@ -17,7 +17,7 @@
         <form action="/processLogin" method="post">
             <div class="form-group">
                 <label for="login">Login</label>
-                <input type="text" class="form-control" id="login" name="login" value="<?php echo getFieldValue('login') ?>">
+                <input type="text" class="form-control" id="login" name="login" value="<?php echo App::get('session')->getFieldValue('login') ?>">
             </div>
             <div class="form-group">
                 <label for="pass">Password</label>

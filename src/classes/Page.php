@@ -32,7 +32,7 @@ class Page
         if(!preg_match("~^\w+$~", $this->path)) {
             die("Page id must be alphanumeric");
         }
-        if ((!isLoggedIn() && $this->path == 'form') || (isLoggedIn() && ($this->path == 'login' || $this->path == 'register'))) {
+        if ((!App::get('session')->isLoggedIn() && $this->path == 'form') || (App::get('session')->isLoggedIn() && ($this->path == 'login' || $this->path == 'register'))) {
             header('Location: /');
             exit();
         }
@@ -46,5 +46,10 @@ class Page
     public function getPath()
     {
         return $this->path;
+    }
+
+    public function redirect($url)
+    {
+        header('Location: ' . $url);
     }
 }

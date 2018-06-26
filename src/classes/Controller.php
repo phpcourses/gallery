@@ -19,7 +19,12 @@ class Controller
      */
     public function process()
     {
-        $this->{$this->page->getPath() . "Action"}();
+        $pageAction = $this->page->getPath() . "Action";
+        if (method_exists($this, $pageAction)) {
+            $this->$pageAction();
+        } else {
+            $this->notFoundAction();
+        }
     }
 
     /**
@@ -27,7 +32,11 @@ class Controller
      */
     private function indexAction()
     {
-        $this->_render('view/index.php', []);
+        $this->_render('view/index.php', [
+            'title' => 'Image Gallery',
+            'image' => new Image(),
+            'pagination' => new Pagination(),
+        ]);
     }
 
     /**
@@ -35,7 +44,9 @@ class Controller
      */
     private function formAction()
     {
-        $this->_render('view/form.php', []);
+        $this->_render('view/form.php', [
+            'errors' => App::get('session')->messages()
+        ]);
     }
 
     /**
@@ -43,7 +54,9 @@ class Controller
      */
     private function loginAction()
     {
-        $this->_render('view/login.php', []);
+        $this->_render('view/login.php', [
+            'errors' => App::get('session')->messages()
+        ]);
     }
 
     /**
@@ -51,7 +64,9 @@ class Controller
      */
     private function registerAction()
     {
-        $this->_render('view/register.php', []);
+        $this->_render('view/register.php', [
+            'errors' => App::get('session')->messages()
+        ]);
     }
 
     /**
@@ -63,8 +78,8 @@ class Controller
     {
         $request = $_REQUEST;
 
-        if (($valid = validateUpload($request)) === true) {
-            if (save()) {
+        if (($valid = App::get('form')->validate($request)) === true) {
+            if (App::get('image')->save()) {
                 header('Location: /');
             } else {
                 header('Location: /form');
@@ -81,7 +96,7 @@ class Controller
     {
         $post = $_POST;
 
-        if (validateLogin($post) && authUser($post['login'], $post['pass'])) {
+        if (App::get('form')->validateLogin($post) && App::get('user')->auth($post['login'], $post['pass'])) {
             header('Location: /');
         } else {
             header('Location: /login');
@@ -93,7 +108,9 @@ class Controller
      */
     private function logoutAction()
     {
-        logOut();
+        App::get('user')->logout();
+        App::get('session')->setMessage('You have been logged out');
+        $this->page->redirect('/');
     }
     /**
      * Registration process
@@ -102,7 +119,7 @@ class Controller
     {
         $post = $_POST;
 
-        if (validateRegistration($post) && createUser($post['login'], $post['pass'], $post['repass'])) {
+        if (validateRegistration($post) && createUser($post['login'], $post['pass'])) {
             header('Location: /');
         } else {
             header('Location: /register');
@@ -112,15 +129,17 @@ class Controller
     /**
      * Remove image
      */
-    public function removeImageAction()
+    private function removeImageAction()
     {
         $id = $_REQUEST['id'];
-
-        deleteImage($id);
-
-        header('Location: /');
+        App::get('image')->delete($id);
+        $this->page->redirect('/');
     }
 
+    private function notFoundAction()
+    {
+        $this->_render('view/404.php');
+    }
     /**
      * Extract data from array to variables and pass them to included template
      * @param $template

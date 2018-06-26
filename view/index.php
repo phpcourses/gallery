@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title><?php echo PAGE_TITLE ?></title>
+    <title><?php echo $title ?></title>
     <link rel="stylesheet" href="pub/css/bootstrap.css">
     <link rel="stylesheet" href="pub/css/main.css">
     <script src="//code.jquery.com/jquery-3.3.1.min.js"></script>
@@ -12,7 +12,7 @@
 <div class="album py-5 bg-light">
     <div class="container">
         <ul class="nav justify-content-end">
-            <?php if (isLoggedIn()): ?>
+            <?php if (App::get('session')->isLoggedIn()): ?>
                 <li class="nav-item">
                     <a class="nav-link" href="/logout">Log out</a>
                 </li>
@@ -25,17 +25,17 @@
                 </li>
             <?php endif; ?>
         </ul>
-        <h1 class="h1 text-center"><?php echo PAGE_TITLE ?></h1>
-        <?php if (isLoggedIn()) : ?>
+        <h1 class="h1 text-center"><?php echo $title ?></h1>
+        <?php if (App::get('session')->isLoggedIn()) : ?>
             <a class="btn btn-dark btn-lg active m-md-2" href="/form">Upload New Image</a>
         <?php endif; ?>
-        <?php if ($messages = getMessages()): ?>
+        <?php if ($messages = App::get('session')->messages()): ?>
             <div class="alert alert-success">
                 <?php echo $messages ?>
             </div>
         <?php endif; ?>
         <div class="row">
-            <?php if (!empty($images = getCollection())): ?>
+            <?php if (!empty($images = $image->getCollection())): ?>
                 <?php foreach ($images as $image): ?>
                     <div class="col-md-4">
                         <div class="card mb-4 box-shadow">
@@ -50,7 +50,7 @@
                                     Created at: <?php echo $image['created_at'] ?>
                                 </p>
                             </div>
-                            <?php if (isLoggedIn()): ?>
+                            <?php if (App::get('session')->isLoggedIn()): ?>
                                 <button type="button" class="btn btn-danger btn-xs"
                                         onclick="if (confirm('Are you sure?')) {location.href = '/removeImage?id=<?php echo $image['id'] ?>';}">
                                     Delete
@@ -68,7 +68,7 @@
         <div class="d-flex p-2">
             <nav>
                 <ul class="pagination justify-content-center">
-                    <?php echo renderPagination() ?>
+                    <?php echo $pagination->render() ?>
                 </ul>
             </nav>
         </div>
