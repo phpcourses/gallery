@@ -25,11 +25,6 @@ class User extends DataEntity
         App::get('session')->clear();
     }
 
-    public function save()
-    {
-
-    }
-
     /** Authorize user
      *
      * @param $postUser

@@ -60,8 +60,8 @@ class Image extends DataEntity
      */
     public function thumbnail($imagePath, &$width, &$height)
     {
-        if (!$this->createDir(IMAGE_THUMBNAIL_URL)) {
-            return IMAGE_PLACEHOLDER;
+        if (!$this->createDir(self::IMAGE_THUMBNAIL_URL)) {
+            return self::IMAGE_PLACEHOLDER;
         }
 
         $params = $this->getOriginalSize($imagePath);
@@ -70,7 +70,7 @@ class Image extends DataEntity
         if ($thumbnailPath) {
             return $thumbnailPath;
         } else {
-            return IMAGE_PLACEHOLDER;
+            return self::IMAGE_PLACEHOLDER;
         }
     }
 
@@ -85,7 +85,7 @@ class Image extends DataEntity
      */
     public function resize($imagePath, $width, $height, $params)
     {
-        $filename = IMAGE_THUMBNAIL_URL . basename($imagePath);
+        $filename = self::IMAGE_THUMBNAIL_URL . basename($imagePath);
         if (file_exists($filename)) {
             return $filename;
         }
@@ -237,11 +237,11 @@ VALUES(NULL, :image_path, :thumbnail_path, :description, :author_name, CURRENT_T
 
     public function upload($file)
     {
-        if (!$this->createDir(IMAGE_RESOURCE_URL)) {
+        if (!$this->createDir(self::IMAGE_RESOURCE_URL)) {
             return false;
         }
 
-        $filename = IMAGE_RESOURCE_URL . time() . $file['name'];
+        $filename = self::IMAGE_RESOURCE_URL . time() . $file['name'];
         if (move_uploaded_file($file['tmp_name'], $filename)) {
             return $filename;
         }
